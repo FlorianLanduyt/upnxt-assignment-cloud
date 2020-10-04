@@ -4,7 +4,6 @@ import { compute } from "./compute";
 import { Game } from "./types";
 import { Frame } from "./types";
 import { LastFrame } from "./types";
-
 const { v4: uuidV4 } = require('uuid');
 const db = require("./database.ts")
 
@@ -18,24 +17,42 @@ app.post("/compute", (request, response) => {
 
   try {
     validateInput(game);
+    let uuid = uuidV4()
 
     const score = compute(game);
 
-    let uuid = uuidV4()
-
-    response.json({
-      "id": uuid,
-      "score": score
-    })
-
+    var insertScore ='INSERT INTO user (id, score) VALUES (?,?)'
+    var params =[uuid, score]
+    db.run(insertScore, params, function (err, result) {
+        if (err){
+            response.status(400).json({"error": err.message})
+            return;
+        }
+        response.status(200).json({"id": uuid, "score": score})
+    });
   } catch (err) {
     response.statusCode = 400
-    response.json({
-      "StatusCode": response.statusCode,
-      "Message": err.message
-    })
+    response.status(400).json({"error": err.message})
   }
 });
+
+app.get("/history", (request, response) => {
+
+  var sql = "SELECT * FROM user WHERE id = ?"
+  var params = [request.query.game]
+
+  console.log(request.params.game)
+  db.get(sql, params, (err, row) => {
+      if (err) {
+        response.status(400).json({"error":err.message});
+        return;
+      }
+      response.json({
+          "id": row.id,
+          "score": row.score
+      })
+    });
+})
 
 export const createServer = () => http.createServer(app);
 
