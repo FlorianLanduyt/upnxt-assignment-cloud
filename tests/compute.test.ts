@@ -19,3 +19,4 @@ it("should return 300 on a perfect game", () => {
 
   expect(score).toBe(300);
 });
+

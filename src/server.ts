@@ -1,6 +1,9 @@
 import http from "http";
 import express from "express";
 import { compute } from "./compute";
+import { Game } from "./types";
+import { Frame } from "./types";
+import { LastFrame } from "./types";
 
 const app = express();
 
@@ -8,20 +11,15 @@ app.use(express.json());
 
 app.post("/compute", (request, response) => {
   const game = request.body.game;
-  // TODO: Validate input
 
   try {
     validateInput(game);
 
     const score = compute(game);
 
-    // TODO: Return response
-
     response.json({
-      "statuscode": response.statusCode,
       "score": score
     })
-
 
   } catch (err) {
     response.statusCode = 400
@@ -35,34 +33,69 @@ app.post("/compute", (request, response) => {
 export const createServer = () => http.createServer(app);
 
 
-function validateInput(game: any) {
-  //Checking if there are exactly 10 tuples
+function validateInput(game: Game) {
+  //Validation on amount of frames in a game
   if (game.length != 10)
-    throw new Error('You amount of throws has to be exactly 10');
+    throw new Error('You amount of frames has to be exactly 10. Currently: ' + game.length);
 
 
-  for (var key in game) {
-    const turn = game[key]
+  for (var frameIndex = 0; frameIndex < game.length; frameIndex++) {
+    var currentFrame = game[frameIndex]
 
-    const totalPinsThrownOverInOneFrame = turn.reduce((throw1: number, throw2: number) => {
+    if (frameIndex < game.length - 1) { // For first 9 FRAMES in the bowling game
+      let amountOfRollsInFrame = 2
+      let amountOfPinsInOneFrame = 10
 
-      //checking if input is a number 
-      if (isNaN(throw1) || isNaN(throw2))
-        throw new Error('Input has to be a number')
+      validateAmountOfRollsInFrame(currentFrame, frameIndex, amountOfRollsInFrame);
+      validateRollsInFrame(currentFrame, frameIndex, amountOfPinsInOneFrame);
 
-      //Checking if score one throw is between 0 and 10
-      if (throw1 > 10 || throw1 < 0 || throw2 > 10 || throw2 < 0)
-        throw new Error('Score of one throw has to be between 0 and 10')
+    } else { // For the last FRAME in the bowling game 
+      let amountOfRollsInFrame = 3
+      let amountOfPinsInOneFrame = 30
 
-      return throw1 + throw2
-    }, 0
-    )
-
-    //Checking if score in one frame is between 0 and 10
-      if (totalPinsThrownOverInOneFrame > 10 || totalPinsThrownOverInOneFrame < 0)
-        throw new Error('Score of one frame has to be between 0 and 10')
+      validateAmountOfRollsInFrame(currentFrame, frameIndex, amountOfRollsInFrame);
+      validateRollsInFrame(currentFrame, frameIndex, amountOfPinsInOneFrame);
+      validateAllowThirdRoll(currentFrame)
+    }
   }
 
   return true
 }
 
+
+function validateAmountOfRollsInFrame(currentFrame: Frame | LastFrame, frameIndex: number, amountOfRolls: number) {
+  if (currentFrame.length != amountOfRolls)
+    throw new Error('Frame ' + (frameIndex + 1) + ' has to have exactly ' + amountOfRolls + ' rolls. Currently: ' + currentFrame.length);
+}
+
+function validateRollsInFrame(currentFrame: Frame | LastFrame, frameIndex: number, amountOfPinsInOneFrame: number) {
+  var totalPinsKnockedOverInOneFrame = 0
+
+  for (var roll in currentFrame) {
+    var currentRoll = currentFrame[roll];
+
+    //Validation on amount of pins knocked over in one ROLL 
+    if (currentRoll > 10 || currentRoll < 0)
+      throw new Error('Roll ' + (parseInt(roll) + 1) + ' in frame ' + (frameIndex + 1) + ' has more than 10 pins knocked over. Please fill in the right data.');
+
+    //Validation on input data is a number
+    if (isNaN(currentRoll))
+      throw new Error('Roll ' + (parseInt(roll) + 1) + ' in frame ' + (frameIndex + 1) + ' is not a number. Please fill in the right data.');
+
+    totalPinsKnockedOverInOneFrame += currentFrame[roll];
+  }
+  
+  //Validation on amount of pins knocked over in one FRAME
+  if (totalPinsKnockedOverInOneFrame > amountOfPinsInOneFrame)
+    throw new Error('Frame ' + (frameIndex + 1) + ' has more than 10 pins knocked over. Please fill in the right data.')
+}
+
+function validateAllowThirdRoll(frame: LastFrame|Frame){
+  var roll1 = frame[0]
+  var roll2 = frame[1]
+  var roll3 = frame[2]
+
+  if((roll1 + roll2 < 10) && roll3 != 0){
+    throw new Error('You can not have a third roll in the last frame if you did not throw a spare of strike in this frame.')
+  }
+}
