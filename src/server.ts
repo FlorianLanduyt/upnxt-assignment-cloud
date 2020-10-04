@@ -5,6 +5,10 @@ import { Game } from "./types";
 import { Frame } from "./types";
 import { LastFrame } from "./types";
 
+const { v4: uuidV4 } = require('uuid');
+const db = require("./database.ts")
+
+
 const app = express();
 
 app.use(express.json());
@@ -17,7 +21,10 @@ app.post("/compute", (request, response) => {
 
     const score = compute(game);
 
+    let uuid = uuidV4()
+
     response.json({
+      "id": uuid,
       "score": score
     })
 

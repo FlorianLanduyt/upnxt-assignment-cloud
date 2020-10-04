@@ -1,5 +1,6 @@
 import { Frame, Game, LastFrame } from "./types";
 
+
 export function compute(game: Game): number {
   var totalScore: number = 0
 
