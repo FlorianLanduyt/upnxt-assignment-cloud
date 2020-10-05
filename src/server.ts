@@ -6,8 +6,6 @@ import { Frame } from "./types";
 import { LastFrame } from "./types";
 const { v4: uuidV4 } = require('uuid');
 const db = require("./database.ts")
-
-
 const app = express();
 
 app.use(express.json());
@@ -31,7 +29,6 @@ app.post("/compute", (request, response) => {
         response.status(200).json({"id": uuid, "score": score})
     });
   } catch (err) {
-    response.statusCode = 400
     response.status(400).json({"error": err.message})
   }
 });
@@ -41,7 +38,6 @@ app.get("/history", (request, response) => {
   var sql = "SELECT * FROM user WHERE id = ?"
   var params = [request.query.game]
 
-  console.log(request.params.game)
   db.get(sql, params, (err, row) => {
       if (err) {
         response.status(400).json({"error":err.message});
@@ -68,17 +64,17 @@ function validateInput(game: Game) {
 
     if (frameIndex < game.length - 1) { // For first 9 FRAMES in the bowling game
       let amountOfRollsInFrame = 2
-      let amountOfPinsInOneFrame = 10
+      let maxAmountOfPinsInOneFrame = 10
 
       validateAmountOfRollsInFrame(currentFrame, frameIndex, amountOfRollsInFrame);
-      validateRollsInFrame(currentFrame, frameIndex, amountOfPinsInOneFrame);
+      validateRollsInFrame(currentFrame, frameIndex, maxAmountOfPinsInOneFrame);
 
     } else { // For the last FRAME in the bowling game 
       let amountOfRollsInFrame = 3
-      let amountOfPinsInOneFrame = 30
+      let maxAmountOfPinsInOneFrame = 30
 
       validateAmountOfRollsInFrame(currentFrame, frameIndex, amountOfRollsInFrame);
-      validateRollsInFrame(currentFrame, frameIndex, amountOfPinsInOneFrame);
+      validateRollsInFrame(currentFrame, frameIndex, maxAmountOfPinsInOneFrame);
       validateAllowThirdRoll(currentFrame)
     }
   }
@@ -92,7 +88,7 @@ function validateAmountOfRollsInFrame(currentFrame: Frame | LastFrame, frameInde
     throw new Error('Frame ' + (frameIndex + 1) + ' has to have exactly ' + amountOfRolls + ' rolls. Currently: ' + currentFrame.length);
 }
 
-function validateRollsInFrame(currentFrame: Frame | LastFrame, frameIndex: number, amountOfPinsInOneFrame: number) {
+function validateRollsInFrame(currentFrame: Frame | LastFrame, frameIndex: number, maxAmountOfPinsInOneFrame: number) {
   var totalPinsKnockedOverInOneFrame = 0
 
   for (var roll in currentFrame) {
@@ -110,8 +106,8 @@ function validateRollsInFrame(currentFrame: Frame | LastFrame, frameIndex: numbe
   }
   
   //Validation on amount of pins knocked over in one FRAME
-  if (totalPinsKnockedOverInOneFrame > amountOfPinsInOneFrame)
-    throw new Error('Frame ' + (frameIndex + 1) + ' has more than 10 pins knocked over. Please fill in the right data.')
+  if (totalPinsKnockedOverInOneFrame > maxAmountOfPinsInOneFrame)
+    throw new Error('Frame ' + (frameIndex + 1) + ' has more than ' + maxAmountOfPinsInOneFrame +  ' pins knocked over. Please fill in the right data.')
 }
 
 function validateAllowThirdRoll(frame: LastFrame|Frame){
@@ -120,6 +116,6 @@ function validateAllowThirdRoll(frame: LastFrame|Frame){
   var roll3 = frame[2]
 
   if((roll1 + roll2 < 10) && roll3 != 0){
-    throw new Error('You can not have a third roll in the last frame if you did not throw a spare of strike in this frame.')
+    throw new Error('You can not have a third roll in the last frame if you did not throw a spare or strike in this frame.')
   }
 }
