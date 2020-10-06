@@ -54,6 +54,7 @@ export const createServer = () => http.createServer(app);
 
 
 function validateInput(game: Game) {
+
   //Validation on amount of frames in a game
   if (game.length != 10)
     throw new Error('You amount of frames has to be exactly 10. Currently: ' + game.length);
@@ -82,12 +83,13 @@ function validateInput(game: Game) {
   return true
 }
 
-
+//Validation on amount of rolls in one frame
 function validateAmountOfRollsInFrame(currentFrame: Frame | LastFrame, frameIndex: number, amountOfRolls: number) {
   if (currentFrame.length != amountOfRolls)
     throw new Error('Frame ' + (frameIndex + 1) + ' has to have exactly ' + amountOfRolls + ' rolls. Currently: ' + currentFrame.length);
 }
 
+//Validation on pins knocked over in frame 
 function validateRollsInFrame(currentFrame: Frame | LastFrame, frameIndex: number, maxAmountOfPinsInOneFrame: number) {
   var totalPinsKnockedOverInOneFrame = 0
 
@@ -110,6 +112,7 @@ function validateRollsInFrame(currentFrame: Frame | LastFrame, frameIndex: numbe
     throw new Error('Frame ' + (frameIndex + 1) + ' has more than ' + maxAmountOfPinsInOneFrame +  ' pins knocked over. Please fill in the right data.')
 }
 
+//Validation on third roll in last FRAME allowed
 function validateAllowThirdRoll(frame: LastFrame|Frame){
   var roll1 = frame[0]
   var roll2 = frame[1]
